@@ -16,11 +16,11 @@ VKontakte::API - Module for login into vkontakte.ru and sending requests
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,9 @@ sub new {
 	bless( $self, $class );
 
 	$self->{api_id}     = $_[0];
-	$self->{api_secret} = $_[1];
+	$self->{secret} = $_[1];
+	$self->{mid}	= $_[2];
+	$self->{sid}	= $_[3];
 
 	$self->{api_url} = "http://api.vk.com/api.php";
 
@@ -93,13 +95,14 @@ sub sendRequest {
 	$params->{'format'}    = 'json';
 	$params->{'rnd'}    = int(rand()*10000);
 
-	my $sig = "";#$self->{'viewer_id'};
-    foreach my $k (sort keys %$params){
+	my $sig = defined $self->{'mid'} ? $self->{'mid'} : '';
+	foreach my $k (sort keys %$params){
 		$sig .= $k . '=' . $params->{$k};
 	}
-	$sig .= $self->{api_secret};
+        $sig .= $self->{secret};
 
 	$params->{'sig'} = md5_hex($sig);
+	$params->{'sid'} = $self->{sid} if $self->{sid};
 	my $query = $self->{api_url} . '?' . $self->_params($params);
 
 	my $mech = WWW::Mechanize->new( agent => 'VKontakte::Auth', );

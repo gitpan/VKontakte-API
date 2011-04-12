@@ -8,6 +8,15 @@ VKontakte-API
     use VKontakte::API;
  
     my $vk = VKontakte::API->new('api_id', 'secret_key');
+
+    #or
+    $vk = VKontakte::API->new(
+        $api_id,
+        $cgi_query->param('session[secret]'),
+        $cgi_query->param('session[mid]'),
+        $cgi_query->param('session[sid]')
+    );
+
     my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
 
 INSTALLATION
