@@ -11,4 +11,10 @@ Revision history for VKontakte-API
 		        $cgi_query->param('session[mid]'),
 		        $cgi_query->param('session[sid]')
 		);
-
+0.03	05:18/12.04.2011
+                 OAuth 2.0 authentification
+                 use VKontakte::API::OAuth;
+		     
+		 my $vk = VKontakte::API::OAuth->new( $opt->{api_id}, $opt->{api_secret} );
+		 my $h = $vk->sendRequest( "getProfiles", { uid => 66748 } );
+		 print Dumper($h);

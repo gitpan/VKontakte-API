@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               VKontakte-API
-version:            0.02
+version:            0.03
 abstract:           Module for login into vkontakte.ru and sending requests
 author:
     - Anastasiya Deeva <support@creograf.ru>

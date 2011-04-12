@@ -1,4 +1,4 @@
-package VKontakte::API;
+package VKontakte::API::OAuth;
 
 use warnings;
 use strict;
@@ -12,40 +12,33 @@ use JSON;
 
 =head1 NAME
 
-VKontakte::API - Module for login into vkontakte.ru and sending requests
+VKontakte::API::OAuth - Module for login into vkontakte.ru using OAuth 2.0 and send requests
 
 =head1 VERSION
 
-Version 0.03
+Version 0.01
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
 	First of all register you application at http://vkontakte.ru/apps.php?act=add
-	get api_id and secret_key to use it like this:
-
-    use VKontakte::API;
- 
-    my $vk = VKontakte::API->new('api_id', 'secret_key');
-    my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
-
-    #or
-    $vk = VKontakte::API->new(
-        $api_id,
-        $cgi_query->param('session[secret]'),
-        $cgi_query->param('session[mid]'),
-        $cgi_query->param('session[sid]')
-    );
+    Details:
+    http://vkontakte.ru/developers.php?o=-1&p=%C0%E2%F2%EE%F0%E8%E7%E0%F6%E8%FF%20%F1%E5%F0%E2%E5%F0%E0%20%EF%F0%E8%EB%EE%E6%E5%ED%E8%FF    
     
-
+    use VKontakte::API::OAuth;
+    
+    my $vk = VKontakte::API::OAuth->new( $opt->{api_id}, $opt->{api_secret} );
+    my $h = $vk->sendRequest( "getProfiles", { uid => 66748 } );
+    print Dumper($h);
+    
 =head1 SUBROUTINES/METHODS
 
-=head2 new
+=head2 getAccessToken
 
-Create new object. Two parameters of registered application:
+Two parameters of registered application:
 
 =over 4
 
@@ -64,17 +57,22 @@ sub new {
 
 	$self->{api_id}     = $_[0];
 	$self->{secret} = $_[1];
-	$self->{mid}	= $_[2];
-	$self->{sid}	= $_[3];
+ 
+    my $query='https://api.vkontakte.ru/oauth/access_token?client_id=' . $self->{api_id} . '&client_secret=' . $self->{secret}. '&grant_type=client_credentials';
 
-	$self->{api_url} = "http://api.vk.com/api.php";
+	my $mech = WWW::Mechanize->new( agent => 'VKontakte::API::OAuth' );
+	$mech->get($query);
+	
+    my $response = $mech->content();
+	utf8::encode($response);
+	my $h=decode_json($response);
+	return undef unless(defined $h->{'access_token'});    
 
+    $self->{'access_token'}=$h->{'access_token'};
 	return $self;
 }
 
 =head2 sendRequest
-
-Send requests described at http://vkontakte.ru/developers.php?o=-1&p=%D0%9E%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5+%D0%BC%D0%B5%D1%82%D0%BE%D0%B4%D0%BE%D0%B2+API
 
 $resp = $auth->sendRequest('getProfiles', {'uids'=>'123123'});
 
@@ -97,37 +95,15 @@ sub sendRequest {
 	my $method = $_[0];
 	my $params = $_[1];
 
-	$params->{'api_id'}    = $self->{'api_id'};
-	$params->{'v'}         = '3.0';
-	$params->{'method'}    = $method;
-	$params->{'timestamp'} = time();
-	$params->{'format'}    = 'json';
-	$params->{'rnd'}    = int(rand()*10000);
+	my $query="https://api.vkontakte.ru/method/$method?".$self->_params($params)."&access_token=".$self->{'access_token'};
 
-	my $sig = defined $self->{'mid'} ? $self->{'mid'} : '';
-	foreach my $k (sort keys %$params){
-		$sig .= $k . '=' . $params->{$k};
-	}
-        $sig .= $self->{secret};
-
-	$params->{'sig'} = md5_hex($sig);
-	$params->{'sid'} = $self->{sid} if $self->{sid};
-	my $query = $self->{api_url} . '?' . $self->_params($params);
-
-	my $mech = WWW::Mechanize->new( agent => 'VKontakte::API', );
+	my $mech = WWW::Mechanize->new( agent => 'VKontakte::API::OAuth' );
 	my $r = $mech->get($query);
 
-	#	my $res      = file_get_contents($query);
 	my $response = $mech->content();
 	utf8::encode($response);
 	return decode_json($response);
 }
-
-=head2 _params
-
-prepares parameters for request
-
-=cut
 
 sub _params {
 	my $self   = shift;
@@ -142,24 +118,6 @@ sub _params {
 	return join( '&', @pice );
 }
 
-
-=head2 _encurl
-
-encodes data for url
-
-=cut
-
-sub _encurl {
-	my ($url) = @_;
-	( defined $url ) || ( $url = "" );
-
-	$url=~s/([^a-z0-9])/sprintf("%%%02x",ord($1))/egsi;
-	#$url =~ s/([^a-z0-9])/sprintf("%%%x",ord($1))/egsi;
-	$url =~ s/ /\+/go;
-	return $url;
-}
-
-
 =head1 AUTHOR
 
 Anastasiya Deeva, C<< <nastya at creograf.ru> >>
@@ -170,14 +128,11 @@ Please report any bugs or feature requests to C<bug-vkontakte-api at rt.cpan.org
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=VKontakte-API>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
-
-
-
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc VKontakte::API
+    perldoc VKontakte::API::OAuth
 
 
 You can also look for information at:
