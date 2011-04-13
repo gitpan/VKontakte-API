@@ -16,15 +16,15 @@ VKontakte::API::OAuth - Module for login into vkontakte.ru using OAuth 2.0 and s
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
-	First of all register you application at http://vkontakte.ru/apps.php?act=add
+    Register you application at http://vkontakte.ru/apps.php?act=add and get api_id and api_secret
     Details:
     http://vkontakte.ru/developers.php?o=-1&p=%C0%E2%F2%EE%F0%E8%E7%E0%F6%E8%FF%20%F1%E5%F0%E2%E5%F0%E0%20%EF%F0%E8%EB%EE%E6%E5%ED%E8%FF    
     
@@ -36,7 +36,7 @@ our $VERSION = '0.01';
     
 =head1 SUBROUTINES/METHODS
 
-=head2 getAccessToken
+=head2 new
 
 Two parameters of registered application:
 
@@ -58,23 +58,23 @@ sub new {
 	$self->{api_id}     = $_[0];
 	$self->{secret} = $_[1];
  
-    my $query='https://api.vkontakte.ru/oauth/access_token?client_id=' . $self->{api_id} . '&client_secret=' . $self->{secret}. '&grant_type=client_credentials';
+	my $query='https://api.vkontakte.ru/oauth/access_token?client_id=' . $self->{api_id} . '&client_secret=' . $self->{secret}. '&grant_type=client_credentials';
 
 	my $mech = WWW::Mechanize->new( agent => 'VKontakte::API::OAuth' );
 	$mech->get($query);
 	
-    my $response = $mech->content();
+	my $response = $mech->content();
 	utf8::encode($response);
 	my $h=decode_json($response);
 	return undef unless(defined $h->{'access_token'});    
 
-    $self->{'access_token'}=$h->{'access_token'};
+	$self->{'access_token'}=$h->{'access_token'};
 	return $self;
 }
 
 =head2 sendRequest
 
-$resp = $auth->sendRequest('getProfiles', {'uids'=>'123123'});
+$resp = $vk->sendRequest('getProfiles', {'uids'=>'123123'});
 
 =over 4
 

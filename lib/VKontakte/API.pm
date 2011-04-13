@@ -16,30 +16,42 @@ VKontakte::API - Module for login into vkontakte.ru and sending requests
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
 	First of all register you application at http://vkontakte.ru/apps.php?act=add
 	get api_id and secret_key to use it like this:
 
-    use VKontakte::API;
+	#1. 
+	use VKontakte::API;
  
-    my $vk = VKontakte::API->new('api_id', 'secret_key');
-    my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
+	my $vk = VKontakte::API->new('api_id', 'secret_key');
+	my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
 
-    #or
-    $vk = VKontakte::API->new(
-        $api_id,
-        $cgi_query->param('session[secret]'),
-        $cgi_query->param('session[mid]'),
-        $cgi_query->param('session[sid]')
-    );
-    
+	#2. or
+	use VKontakte::API;
+	$vk = VKontakte::API->new(
+	        $api_id,
+	        $cgi_query->param('session[secret]'),
+	        $cgi_query->param('session[mid]'),
+	        $cgi_query->param('session[sid]')
+	);
+	my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
+
+
+	#3. or new one, use OAuth 2.0
+	use VKontakte::API::OAuth;
+	$vk = VKontakte::API::OAuth->new(
+	        $api_id,
+	        $secret
+	);
+	my $data=$vk->sendRequest('getProfiles', {'domains'=>'deevaas'});
+       
 
 =head1 SUBROUTINES/METHODS
 
